@@ -4,6 +4,8 @@
             <l-tile-layer :key="tileProvider.name" :name="tileProvider.name" :visible="tileProvider.visible" :url="tileProvider.url" :attribution="tileProvider.attribution"></l-tile-layer>
             <l-marker v-if="currMarker" :latLng="currMarker" v-on:click="removeMarker"></l-marker>
             <l-geo-json v-if="polygon" :geojson="polygon"></l-geo-json>
+            <LeafletHeatmap v-if="heatmap" :lat-lng="heatmap" :max-zoom="11" :radius="80"></LeafletHeatmap>
+
         </l-map>
     </div>
 </template>
@@ -12,7 +14,7 @@
     import Vue from 'vue';
     import { LMap, LTileLayer, LMarker, LPolyline, LLayerGroup, LTooltip, LPopup, LControlZoom, LControlAttribution, LControlScale, LControlLayers, LGeoJson } from 'vue2-leaflet';
     import axios from 'axios'
-
+    import LeafletHeatmap from 'vue2-leaflet-heatmap'
 
     const tileProvider =
           {
@@ -39,7 +41,9 @@
                 marker: null,
                 currMarker: null,
                 polygon: null,
+                heatmap: null,
                 tileProvider: tileProvider,
+                gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'},
             }
         },
 
@@ -61,6 +65,7 @@
             LControlScale,
             LControlLayers,
             LGeoJson,
+            LeafletHeatmap,
         },
 
         methods: {
@@ -93,6 +98,26 @@
                 });
             },
 
+            showHeatmap: function(state) {
+                if(state === false){
+                    this.heatmap = null;
+                    return;
+                }
+                var arr = [];
+                axios.get('http://127.0.0.1:5000/get_heatmap').then(response => {
+                    response.data.map(point => {
+                        var latlng = point['geometry']['coordinates'];
+                        latlng = latlng.slice().reverse();
+                        latlng.push(point['properties']['count']);
+                        arr.push(latlng);
+                    });
+                    this.heatmap = arr;
+                    console.log(this.heatmap);
+                });
+            },
+
+
+
             mapClick: function (e) {
                 this.currMarker = e['latlng'];
                 this.polygon = null;
@@ -117,9 +142,6 @@
                 this.polygon = null;
             },
         },
-
-
-
 
     }
 

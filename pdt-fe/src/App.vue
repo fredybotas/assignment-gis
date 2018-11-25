@@ -4,12 +4,26 @@
             <div class="row">
                 <div class="col-2">
                     <div>
+                        <b-button :pressed.sync="heatmap"
+                                  variant="success" key="success">
+                                Heatmapa
+                        </b-button>
+                    </div>
+                    <div>
                         <b-card variant="primary">
                             Zvery v blizkosti
-                            <b-collapse id="collapse1" class="mt-1" v-model="collapsed">
+                            <b-collapse id="collapse1" class="mt-1"
+                                        v-model="collapsed">
                                 <b-form-group>
-                                    <b-form-radio-group stacked v-model="selectedNearby" name="radiosStacked">
-                                        <b-form-radio v-for="(animal, index) in animalsNearby" :value="index" @onClick="animalSelected"> {{ animal.properties.name }} </b-form-radio>
+                                    <b-form-radio-group stacked
+                                                        v-model="selectedNearby"
+                                                        name="radiosStacked">
+                                        <b-form-radio
+                                                v-for="(animal, index) in animalsNearby"
+                                                :value="index"
+                                                @onClick="animalSelected">
+                                            {{ animal.properties.name }}
+                                        </b-form-radio>
                                     </b-form-radio-group>
                                 </b-form-group>
                             </b-collapse>
@@ -17,8 +31,11 @@
                     </div>
 
                     <div>
-                        <b-form-select multiple :select-size="10" v-model="selectedAnimals" class="mb-3">
-                                <option v-if="animals" v-for="animal in animals" :value="animal"> {{ animal }}</option>
+                        <b-form-select multiple :select-size="10"
+                                       v-model="selectedAnimals" class="mb-3">
+                            <option v-if="animals" v-for="animal in animals"
+                                    :value="animal"> {{ animal }}
+                            </option>
                         </b-form-select>
                     </div>
 
@@ -57,6 +74,7 @@
                 animalsNearby: null,
                 selectedNearby: null,
                 selectedAnimals: [],
+                heatmap: false,
             }
         },
 
@@ -65,9 +83,13 @@
                 this.$refs.map.showPolygon(val);
             },
 
-            selectedAnimals: function(val) {
+            selectedAnimals: function (val) {
                 this.$refs.map.removeMarker();
                 this.$refs.map.showIntersectedPolygon(val);
+            },
+
+            heatmap: function (val) {
+                this.$refs.map.showHeatmap(val);
             },
         },
 
@@ -89,7 +111,7 @@
                 this.collapsed = false;
             },
 
-            animalSelected: function() {
+            animalSelected: function () {
                 console.log("selected animal");
             }
         },

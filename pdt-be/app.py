@@ -98,3 +98,30 @@ def get_animal_polygon_by_name():
     res = cursor.fetchall()
     res = [x[0] for x in res]
     return jsonify(res)
+
+@app.route('/get_heatmap')
+def get_heatmap():
+    cursor = get_db().cursor()
+    cursor.execute("""
+                        SELECT json_build_object(
+                        'type',       'Feature',
+                        'geometry',   ST_AsGeoJSON(points)::json,
+                        'properties', json_build_object(
+                          'count', count(CASE WHEN ST_Contains(geom_slovakia, points) THEN 1 END)))  
+                        FROM(SELECT(ST_Dump(ST_GeneratePoints(way, 250))).geom as points FROM countries) a
+                        CROSS JOIN
+                        occurences_slovakia b GROUP BY a.points
+                        """)
+    res = cursor.fetchall()
+    res = [x[0] for x in res]
+    values = []
+    for point in res:
+        values.append(point['properties']['count'])
+    min_val = min(values)
+    max_val = max(values)
+    max_val -= min_val
+    for i in range(len(res)):
+        res[i]['properties']['count'] -= min_val
+        res[i]['properties']['count'] /= max_val
+
+    return jsonify(res)
