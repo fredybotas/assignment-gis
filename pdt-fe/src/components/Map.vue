@@ -4,7 +4,7 @@
             <l-tile-layer :key="tileProvider.name" :name="tileProvider.name" :visible="tileProvider.visible" :url="tileProvider.url" :attribution="tileProvider.attribution"></l-tile-layer>
             <l-marker v-if="currMarker" :latLng="currMarker" v-on:click="removeMarker"></l-marker>
             <l-geo-json v-if="polygon" :geojson="polygon"></l-geo-json>
-            <LeafletHeatmap v-if="heatmap" :lat-lng="heatmap" :max-zoom="11" :radius="80"></LeafletHeatmap>
+            <leaflet-heatmap v-if="heatmap" :lat-lng="heatmap" :max-zoom="11" :radius="80"></leaflet-heatmap>
 
         </l-map>
     </div>
@@ -69,15 +69,6 @@
         },
 
         methods: {
-            fetchSlovakia: function () {
-                Vue.http.get('http://127.0.0.1:5000/get_slovakia').then(response => {
-                    this.slovakia = response.data[0];
-                    let vm = this;
-                    console.log(this.slovakia['json_build_object']);
-                    L.geoJSON(this.slovakia['json_build_object']).addTo(this.mymap);
-                });
-            },
-
             showPolygon: function(index) {
                 if(index === null) {
                     this.polygon = index;
@@ -89,7 +80,7 @@
 
             showIntersectedPolygon: function(animals) {
                 console.log(animals);
-                axios.get('http://127.0.0.1:5000/get_animal', {params:
+                axios.get(process.env.VUE_APP_BACKEND+'get_animal', {params:
                     {
                         name:animals[0],
                     }
@@ -104,7 +95,7 @@
                     return;
                 }
                 var arr = [];
-                axios.get('http://127.0.0.1:5000/get_heatmap').then(response => {
+                axios.get(process.env.VUE_APP_BACKEND+'get_heatmap').then(response => {
                     response.data.map(point => {
                         var latlng = point['geometry']['coordinates'];
                         latlng = latlng.slice().reverse();
@@ -121,7 +112,9 @@
             mapClick: function (e) {
                 this.currMarker = e['latlng'];
                 this.polygon = null;
-                axios.get('http://127.0.0.1:5000/get_nearby', {params:
+                this.$parent.animalsNearby = null;
+                this.nearbyPolygons = null;
+                axios.get(process.env.VUE_APP_BACKEND+'get_nearby', {params:
                     {
                         lat:e['latlng']['lat'],
                         lng:e['latlng']['lng'],

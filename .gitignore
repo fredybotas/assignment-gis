@@ -301,3 +301,4 @@ docs/_book
 test/
 
 # End of https://www.gitignore.io/api/vuejs,macos,flask,python,intellij+all
+/db/db_dump.gz
