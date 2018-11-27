@@ -16,34 +16,39 @@
                             Heatmapa
 
 
+
                         </b-button>
                     </div>
                     <div class="mb-2">
-                        <b-card variant="primary" class="mb-2">
-                            Zvery na celom uzemi
-
-
-
-                            <b-form-select multiple :select-size="10"
-                                           v-model="selectedAnimals"
-                                           class=" mt-2">
-                                <option v-if="animals"
-                                        v-for="animal in animals"
-                                        :value="animal"> {{ animal }}
-
-
-
-                                </option>
-                            </b-form-select>
-
+                        <b-card variant="primary">
+                            <b-form-group label="Zvery na celom uzemi"
+                                          style="height: 200px; overflow-y: scroll;">
+                                <b-form-checkbox-group id="checkboxes1"
+                                                       name="flavour1"
+                                                       v-model="selectedAnimals">
+                                    <b-form-checkbox v-if="animals"
+                                                     v-for="animal in animals"
+                                                     :value="animal">{{ animal
+                                        }}
+                                    </b-form-checkbox>
+                                </b-form-checkbox-group>
+                            </b-form-group>
                         </b-card>
 
                     </div>
                     <div>
                         <b-card variant="primary" class="mb-2">
-                            Zvery v blizkosti
+                            Zvery v okruhu {{ sliderValue }} km
 
 
+
+                            <div class="slidecontainer">
+                                10km
+                                    <input type="range" min="10" max="100"
+                                   v-model="sliderValue"
+                                   style="max-width: 90px" @mouseup="refreshRadius">
+                                100km <br>
+                            </div>
                             <b-collapse id="collapse1" class="mt-1"
                                         v-model="collapsed">
                                 <b-form-group
@@ -59,6 +64,7 @@
 
 
 
+
                                         </b-form-radio>
                                     </b-form-radio-group>
                                 </b-form-group>
@@ -66,8 +72,6 @@
                         </b-card>
 
                     </div>
-                    <b-form-slider v-model="sliderValue" :min="0" :max="100"
-                                   trigger-change-event></b-form-slider>
 
                 </div>
                 <div class="col-10">
@@ -84,14 +88,12 @@
     import axios from 'axios'
     import 'bootstrap/dist/css/bootstrap.css'
     import 'bootstrap-vue/dist/bootstrap-vue.css'
-    import {bFormSlider} from 'vue-bootstrap-slider';
 
 
     export default {
         name: 'app',
         components: {
             Map,
-            bFormSlider
         },
 
         mounted: function () {
@@ -108,7 +110,7 @@
                 selectedNearby: null,
                 selectedAnimals: [],
                 heatmapButtonDisabled: false,
-                sliderValue: 0,
+                sliderValue: 20,
             }
         },
 
@@ -125,6 +127,11 @@
 
         methods: {
 
+            refreshRadius: function () {
+                this.$refs.map.radius = this.sliderValue;
+                this.$refs.map.refreshRadius(this.sliderValue);
+            },
+
             heatmapClicked: function () {
                 this.$refs.map.showHeatmap();
             },
@@ -137,7 +144,6 @@
 
             showCollapse: function (animals) {
                 this.animalsNearby = animals;
-                this.selectedNearby = null;
                 this.collapsed = true;
             },
 

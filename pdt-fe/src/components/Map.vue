@@ -42,14 +42,26 @@
                 currMarker: null,
                 gettingHeatmap: false,
                 polygon: null,
+                polygonIndex: null,
                 heatmap: null,
                 tileProvider: tileProvider,
                 gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'},
+                radius: 20,
             }
         },
 
         mounted: function () {
 
+        },
+
+        watch: {
+          polygonIndex: function(val) {
+              if(val === null) {
+                    this.polygon = val;
+                    return;
+              }
+              this.polygon = this.nearbyPolygons[val];
+          }
         },
 
 
@@ -81,6 +93,9 @@
 
             showIntersectedPolygon: function(animals) {
                 console.log(animals);
+                if(animals.length === 0) {
+                    return;
+                }
                 axios.get(process.env.VUE_APP_BACKEND+'get_animal', {params:
                     {
                         name:JSON.stringify(animals),
@@ -126,7 +141,7 @@
                     {
                         lat:e['latlng']['lat'],
                         lng:e['latlng']['lng'],
-                        radius: 20000
+                        radius: this.radius * 1000
                     }
                 }).then(response => {
                     this.nearbyPolygons = response.data;
@@ -134,6 +149,25 @@
                 });
 
 
+            },
+
+            refreshRadius: function (radius) {
+                this.polygon = null;
+                this.$parent.animalsNearby = null;
+                this.nearbyPolygons = null;
+                if(this.currMarker === null) {
+                    return;
+                }
+                axios.get(process.env.VUE_APP_BACKEND+'get_nearby', {params:
+                    {
+                        lat:this.currMarker['lat'],
+                        lng:this.currMarker['lng'],
+                        radius: radius * 1000,
+                    }
+                }).then(response => {
+                    this.nearbyPolygons = response.data;
+                    this.$parent.showCollapse(response.data)
+                });
             },
 
             removeMarker: function () {

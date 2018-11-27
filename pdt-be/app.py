@@ -88,9 +88,6 @@ def get_animal_polygon_by_name():
     import ast
     names = request.args.get('name')
     names = ast.literal_eval(names)
-    print(type(names))
-    print(len(names))
-    print(names[1:])
     cursor = get_db().cursor()
     cursor.execute("""
             WITH RECURSIVE rec AS (
