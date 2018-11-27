@@ -5,20 +5,49 @@
             <span class="navbar-brand mb-0 h1">PDT projekt Michal Manak</span>
         </nav>
         <div class="container-fluid">
+
             <div class="row">
                 <div class="col-2">
                     <div class="mb-2">
-                        <b-button :pressed.sync="heatmap"
-                                  variant="success" key="success"  style="width: 100%">
-                                Heatmapa
+                        <b-button :disabled="heatmapButtonDisabled"
+                                  v-on:click="heatmapClicked"
+                                  variant="secondary" key="secondary"
+                                  style="width: 100%">
+                            Heatmapa
+
+
                         </b-button>
                     </div>
+                    <div class="mb-2">
+                        <b-card variant="primary" class="mb-2">
+                            Zvery na celom uzemi
+
+
+
+                            <b-form-select multiple :select-size="10"
+                                           v-model="selectedAnimals"
+                                           class=" mt-2">
+                                <option v-if="animals"
+                                        v-for="animal in animals"
+                                        :value="animal"> {{ animal }}
+
+
+
+                                </option>
+                            </b-form-select>
+
+                        </b-card>
+
+                    </div>
                     <div>
-                        <b-card variant="primary"  class="mb-2">
+                        <b-card variant="primary" class="mb-2">
                             Zvery v blizkosti
+
+
                             <b-collapse id="collapse1" class="mt-1"
                                         v-model="collapsed">
-                                <b-form-group style="max-height: 120px; overflow-y: scroll;">
+                                <b-form-group
+                                        style="max-height: 150px; overflow-y: scroll;">
                                     <b-form-radio-group stacked
                                                         v-model="selectedNearby"
                                                         name="radiosStacked">
@@ -27,21 +56,18 @@
                                                 :value="index"
                                                 @onClick="animalSelected">
                                             {{ animal.properties.name }}
+
+
+
                                         </b-form-radio>
                                     </b-form-radio-group>
                                 </b-form-group>
                             </b-collapse>
                         </b-card>
-                    </div>
 
-                    <div>
-                        <b-form-select multiple :select-size="10"
-                                       v-model="selectedAnimals" class="mb-3">
-                            <option v-if="animals" v-for="animal in animals"
-                                    :value="animal"> {{ animal }}
-                            </option>
-                        </b-form-select>
                     </div>
+                    <b-form-slider v-model="sliderValue" :min="0" :max="100"
+                                   trigger-change-event></b-form-slider>
 
                 </div>
                 <div class="col-10">
@@ -58,11 +84,14 @@
     import axios from 'axios'
     import 'bootstrap/dist/css/bootstrap.css'
     import 'bootstrap-vue/dist/bootstrap-vue.css'
+    import {bFormSlider} from 'vue-bootstrap-slider';
+
 
     export default {
         name: 'app',
         components: {
-            Map
+            Map,
+            bFormSlider
         },
 
         mounted: function () {
@@ -78,7 +107,8 @@
                 animalsNearby: null,
                 selectedNearby: null,
                 selectedAnimals: [],
-                heatmap: false,
+                heatmapButtonDisabled: false,
+                sliderValue: 0,
             }
         },
 
@@ -91,15 +121,16 @@
                 this.$refs.map.removeMarker();
                 this.$refs.map.showIntersectedPolygon(val);
             },
-
-            heatmap: function (val) {
-                this.$refs.map.showHeatmap(val);
-            },
         },
 
         methods: {
+
+            heatmapClicked: function () {
+                this.$refs.map.showHeatmap();
+            },
+
             fetchAnimals: function () {
-                axios.get(process.env.VUE_APP_BACKEND+'get_animals').then(response => {
+                axios.get(process.env.VUE_APP_BACKEND + 'get_animals').then(response => {
                     this.animals = response.data;
                 });
             },
@@ -131,10 +162,10 @@
     }
 
     .card-body {
-    -ms-flex: 1 1 auto;
-    -webkit-box-flex: 1;
-    flex: 1 1 auto;
-    padding: 0.5rem;
-}
+        -ms-flex: 1 1 auto;
+        -webkit-box-flex: 1;
+        flex: 1 1 auto;
+        padding: 0.5rem;
+    }
 
 </style>

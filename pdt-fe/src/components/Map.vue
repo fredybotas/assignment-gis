@@ -40,6 +40,7 @@
                 slovakia: null,
                 marker: null,
                 currMarker: null,
+                gettingHeatmap: false,
                 polygon: null,
                 heatmap: null,
                 tileProvider: tileProvider,
@@ -82,19 +83,25 @@
                 console.log(animals);
                 axios.get(process.env.VUE_APP_BACKEND+'get_animal', {params:
                     {
-                        name:animals[0],
+                        name:JSON.stringify(animals),
                     }
                 }).then(response => {
+                    console.log(response.data);
                     this.polygon = response.data;
                 });
             },
 
-            showHeatmap: function(state) {
-                if(state === false){
+            showHeatmap: function() {
+                if(this.heatmap != null){
                     this.heatmap = null;
                     return;
                 }
+                if(this.gettingHeatmap === true){
+                    return;
+                }
                 var arr = [];
+                this.gettingHeatmap = true;
+                this.$parent.heatmapButtonDisabled = true;
                 axios.get(process.env.VUE_APP_BACKEND+'get_heatmap').then(response => {
                     response.data.map(point => {
                         var latlng = point['geometry']['coordinates'];
@@ -103,7 +110,8 @@
                         arr.push(latlng);
                     });
                     this.heatmap = arr;
-                    console.log(this.heatmap);
+                    this.gettingHeatmap = false;
+                    this.$parent.heatmapButtonDisabled = false;
                 });
             },
 
