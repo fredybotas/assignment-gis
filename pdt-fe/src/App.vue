@@ -16,7 +16,6 @@
                             Heatmapa
 
 
-
                         </b-button>
                     </div>
                     <div class="mb-2">
@@ -30,6 +29,7 @@
                                                      v-for="animal in animals"
                                                      :value="animal">{{ animal
                                         }}
+
                                     </b-form-checkbox>
                                 </b-form-checkbox-group>
                             </b-form-group>
@@ -42,11 +42,13 @@
 
 
 
+
                             <div class="slidecontainer">
                                 10km
                                     <input type="range" min="10" max="100"
-                                   v-model="sliderValue"
-                                   style="max-width: 90px" @mouseup="refreshRadius">
+                                           v-model="sliderValue"
+                                           style="max-width: 90px"
+                                           @mouseup="refreshRadius">
                                 100km <br>
                             </div>
                             <b-collapse id="collapse1" class="mt-1"
@@ -61,6 +63,7 @@
                                                 :value="index"
                                                 @onClick="animalSelected">
                                             {{ animal.properties.name }}
+
 
 
 
@@ -143,6 +146,7 @@
             },
 
             showCollapse: function (animals) {
+                this.index = null;
                 this.animalsNearby = animals;
                 this.collapsed = true;
             },

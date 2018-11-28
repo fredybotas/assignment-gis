@@ -117,16 +117,22 @@ def get_animal_polygon_by_name():
 
     return jsonify(res)
 
+
 @app.route('/get_heatmap')
 def get_heatmap():
     cursor = get_db().cursor()
     cursor.execute("""
+                        with get_slovakia AS (SELECT way FROM countries) ,generate_points AS (SELECT ST_SetSrid(ST_MakePoint(x, y), 4326) as points FROM 
+                              generate_series(floor(st_xmin((SELECT way FROM get_slovakia)))::int, ceiling(st_xmax((SELECT way FROM get_slovakia)))::int, 0.15) as x,
+                              generate_series(floor(st_ymin((SELECT way FROM get_slovakia)))::int, ceiling(st_ymax((SELECT way FROM get_slovakia)))::int, 0.15) as y
+							WHERE ST_Contains((SELECT way FROM get_slovakia), ST_SetSrid(ST_MakePoint(x, y), 4326)) )
+
                         SELECT json_build_object(
                         'type',       'Feature',
                         'geometry',   ST_AsGeoJSON(points)::json,
                         'properties', json_build_object(
                           'count', count(CASE WHEN ST_Contains(geom_slovakia, points) THEN 1 END)))  
-                        FROM(SELECT(ST_Dump(ST_GeneratePoints(way, 250))).geom as points FROM countries) a
+                        FROM( SELECT * FROM generate_points) a
                         CROSS JOIN
                         occurences_slovakia b GROUP BY a.points
                         """)

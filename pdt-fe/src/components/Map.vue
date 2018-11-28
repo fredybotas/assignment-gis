@@ -3,8 +3,9 @@
         <l-map :zoom="zoom" :center="center" v-on:click="mapClick">
             <l-tile-layer :key="tileProvider.name" :name="tileProvider.name" :visible="tileProvider.visible" :url="tileProvider.url" :attribution="tileProvider.attribution"></l-tile-layer>
             <l-marker v-if="currMarker" :latLng="currMarker" v-on:click="removeMarker"></l-marker>
+            <l-circle v-if="currMarker" :latLng="currMarker" :radius="radius * 1000" fillColor="red"></l-circle>
             <l-geo-json v-if="polygon" :geojson="polygon"></l-geo-json>
-            <leaflet-heatmap v-if="heatmap" :lat-lng="heatmap" :max-zoom="11" :radius="80"></leaflet-heatmap>
+            <leaflet-heatmap v-if="heatmap" :lat-lng="heatmap" :max-zoom="11.5" :radius="100"></leaflet-heatmap>
 
         </l-map>
     </div>
@@ -12,7 +13,7 @@
 
 <script>
     import Vue from 'vue';
-    import { LMap, LTileLayer, LMarker, LPolyline, LLayerGroup, LTooltip, LPopup, LControlZoom, LControlAttribution, LControlScale, LControlLayers, LGeoJson } from 'vue2-leaflet';
+    import { LCircle, LMap, LTileLayer, LMarker, LPolyline, LLayerGroup, LTooltip, LPopup, LControlZoom, LControlAttribution, LControlScale, LControlLayers, LGeoJson } from 'vue2-leaflet';
     import axios from 'axios'
     import LeafletHeatmap from 'vue2-leaflet-heatmap'
 
@@ -79,6 +80,7 @@
             LControlLayers,
             LGeoJson,
             LeafletHeatmap,
+            LCircle,
         },
 
         methods: {
