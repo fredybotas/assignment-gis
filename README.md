@@ -15,13 +15,15 @@ Build a map-based application, which lets the user see geo-based data on a map a
 ## Data sources
 
 - [Open Street Maps](https://www.openstreetmap.org/)
+- [IUCN Red List of Threatened Species](https://www.iucnredlist.org/)
 
 ## My project
 
-Fill in (either in English, or in Slovak):
 
-**Application description**: `<fill in>`
+**Application description**: Application showing occurence of threatened animals in Slovakia
 
-**Data source**: `<fill in>`
+**Data source**: 
+- [Open Street Maps](https://www.openstreetmap.org/)
+- [IUCN Red List of Threatened Species](https://www.iucnredlist.org/)
 
-**Technologies used**: `<fill in>`
+**Technologies used**: Postgres, Flask, Vue.js

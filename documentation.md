@@ -1,62 +1,73 @@
-*This is a documentation for a fictional project, just to show you what I expect. Notice a few key properties:*
-- *no cover page, really*
-- *no copy&pasted assignment text*
-- *no code samples*
-- *concise, to the point, gets me a quick overview of what was done and how*
-- *I don't really care about the document length*
-- *I used links where appropriate*
-
 # Overview
 
-This application shows hotels in Bratislava on a map. Most important features are:
-- search by proximity to my current location
-- search by hotel name
-- intelligent ordering - by proximity and by hotel features
-- hotels on the map are color coded by their quality assigned in stars (standard)
+This application shows animals occurence in Slovakia. Features of application are:
+- search animals by chosen proximity to current location
+- search intersection areas of animals occurence in slovakia (multiple intersection, not just 2)
+- show heatmap of animal diversity in slovakia
 
-This is it in action:
+Screenshots from application
+![Screenshot-heatmap](screenshot-heatmap.png)
 
-![Screenshot](screenshot.png)
+![Screenshot-intersection](screenshot-intersection.png)
 
-The application has 2 separate parts, the client which is a [frontend web application](#frontend) using mapbox API and mapbox.js and the [backend application](#backend) written in [Rails](http://rubyonrails.org/), backed by PostGIS. The frontend application communicates with backend using a [REST API](#api).
+![Screenshot-proximity](screenshot-proximity.png)
+
+
+Application consists of 3 parts. 
+- postgres database server using postgis. 
+- [backend server](#backend) written in Python Flask. This part is responsible for serving data from database (REST API using GeoJSON format mainly)
+- [frontend application](#frontend) written in Vue.js. It contains Leaflet map using mapbox layout. It is responsible for geo data visualization in map.
 
 # Frontend
 
-The frontend application is a static HTML page (`index.html`), which shows a mapbox.js widget. It is displaying hotels, which are mostly in cities, thus the map style is based on the Emerald style. I modified the style to better highlight main sightseeing points, restaurants and bus stops, since they are all important when selecting a hotel. I also highlighted rails tracks to assist in finding a quiet location.
+Frontend application is written in Vue.js. It contains Leaflet map component filled by mapbox. Map is customised by using different color styles (more appropriate for nature domain) and hiding irrelevant elements.
+I used [bootstrap-vue](https://bootstrap-vue.js.org/), [vue2-leaflet](https://www.npmjs.com/package/vue2-leaflet) and [vue2-leaflet-heatmap](https://github.com/jurb/vue2-leaflet-heatmap) libraries.
 
-All relevant frontend code is in `application.js` which is referenced from `index.html`. The frontend code is very simple, its only responsibilities are:
-- detecting user's location, using the standard [web location API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation)
-- displaying the sidebar panel with hotel list and filtering controls, driving the user interaction and calling the appropriate backend APIs
-- displaying geo features by overlaying the map with a geojson layer, the geojson is provided directly by backend APIs
+It has 2 main parts (components):
+- main component (src/App.vue) - control bar on the left side of the application
+- map component (src/components/Map.vue) - contains map and all required elements for showing geodata
+
 
 # Backend
 
-The backend application is written in Ruby on Rails and is responsible for querying geo data, formatting the geojson and data for the sidebar panel.
+Backend is written in Flask (Python web framework) and its main responsibility is to expose geodata in [GeoJSON](http://geojson.org/) format to public, so that frontend can fetch it. It is using `ST_AsGeoJSON` for getting geodata from shapes and `json_build_object` for customising JSON to needed GeoJSON format.
 
 ## Data
+Data about animals (chordates) comes from [IUCN Red List Organization](https://www.iucnredlist.org/), where I requested them. Data were in .shp format, I imported them using `shp2psql` to WSG84 schema.
+They contained global occurences of animals that can be found in Slovakia. I created new table containing those data in Slovakia region only. 
+Dataset contains only scientific names of animals, so I created script that fetch english names from [wikimedia](https://species.wikimedia.org/wiki/Main_Page) and adds them into db.
 
-Hotel data is coming directly from Open Street Maps. I downloaded an extent covering whole Slovakia (around 1.2GB) and imported it using the `osm2pgsql` tool into the standard OSM schema in WGS 84 with hstore enabled. To speedup the queries I created an index on geometry column (`way`) in all tables. The application follows standard Rails conventions and all queries are placed in models inside `app/models`, mostly in `app/models/hotel.rb`. GeoJSON is generated by using a standard `st_asgeojson` function, however some postprocessing is necessary (in `app/controllers/search_controller.rb`) in order to merge all hotels into a single geojson.
 
 ## Api
 
-**Find hotels in proximity to coordinates**
+**Fetch names of animals found in Slovakia**
 
-`GET /search?lat=25346&long=46346123`
+`GET /get_animals`
 
-**Find hotels by name, sorted by proximity and quality**
+**Fetch polygon that is result of intersections between polygons of provided animals**
 
-`GET /search?name=hviezda&lat=25346&long=46346123`
+`GET /get_animal?name=[%22Alpine+Accentor%22,%22Alpine+Chough%22,%22Alpine+Marmot%22]`
+
+**Fetch polygons of animals that can be found near point defined by lat and lng with given radius**
+
+`GET /get_nearby?lat=48.610970750557364&lng=18.498650204737213&radius=53000`
+
+**Fetch points ordered in rectangular grid with their intensity <0, 1> of animal diversity(how many different animals can be found at location of each point)**
+
+`GET /get_heatmap`
 
 ### Response
 
-API calls return json responses with 2 top-level keys, `hotels` and `geojson`. `hotels` contains an array of hotel data for the sidebar, one entry per matched hotel. Hotel attributes are (mostly self-evident):
+API returns [GeoJSON](http://geojson.org/), where geometry key contains geodata (polygons, points, ..) and properties key contains additional info, e.g:
 ```
 {
-  "name": "Modra hviezda",
-  "style": "modern", # cuisine style
-  "stars": 3,
-  "address": "Panska 31"
-  "image_url": "/assets/hotels/652.png"
+    type: "Feature",
+    geometry: {
+        coordinates: [ 21.7, 49.25], 
+        type: "Point" 
+    },
+    properties: {   
+        count: 0.20754716981132076 
+    },
 }
 ```
-`geojson` contains a geojson with locations of all matched hotels and style definitions.
