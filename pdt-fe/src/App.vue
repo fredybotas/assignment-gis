@@ -13,7 +13,7 @@
                                   v-on:click="heatmapClicked"
                                   variant="secondary" key="secondary"
                                   style="width: 100%">
-                            Heatmapa
+                            Heatmap
 
 
                         </b-button>
@@ -25,12 +25,14 @@
                                 <b-form-checkbox-group id="checkboxes1"
                                                        name="flavour1"
                                                        v-model="selectedAnimals">
-                                    <b-form-checkbox v-if="animals"
-                                                     v-for="animal in animals"
-                                                     :value="animal">{{ animal
-                                        }}
 
+                                    <div class="row ml-2" v-if="animals"
+                                                     v-for="animal in animals">
+
+                                    <b-form-checkbox :value="animal">{{ animal }}
                                     </b-form-checkbox>
+                                    </div>
+
                                 </b-form-checkbox-group>
                             </b-form-group>
                         </b-card>

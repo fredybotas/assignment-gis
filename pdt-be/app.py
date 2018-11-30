@@ -66,8 +66,10 @@ def get_nearby():
                       'type',       'Feature',
                       'geometry',   ST_AsGeoJSON(ST_Intersection(ST_Buffer(ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, %s), geom_slovakia))::json,
                       'properties', json_build_object(
-                        'name', binomial))
-                      FROM occurences_slovakia WHERE ST_DWithin(ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, geom_slovakia::geography, %s) AND ST_Area(geom_slovakia::geography) < %s AND legend != 'Extinct';
+                        'name', (CASE WHEN binomial_en != '' THEN binomial_en ELSE binomial END)))
+                      FROM occurences_slovakia WHERE ST_DWithin(ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, geom_slovakia::geography, %s) 
+                      AND ST_Area(geom_slovakia::geography) < %s AND legend != 'Extinct' 
+                      ORDER BY (CASE WHEN binomial_en != '' THEN binomial_en ELSE binomial END);
                    """, (lng, lat, radius, lng, lat, radius, AREA_RARE))
     res = cursor.fetchall()
     res = [x[0] for x in res]
@@ -77,7 +79,8 @@ def get_nearby():
 @app.route('/get_animals')
 def get_animals():
     cursor = get_db().cursor()
-    cursor.execute("SELECT DISTINCT binomial from occurences_slovakia WHERE ST_Area(geom_slovakia::geography) < %s", (AREA_RARE,))
+    cursor.execute("SELECT DISTINCT (CASE WHEN binomial_en != '' THEN binomial_en ELSE binomial END) AS name "
+                   "from occurences_slovakia WHERE ST_Area(geom_slovakia::geography) < %s ORDER BY name", (AREA_RARE,))
     res = cursor.fetchall()
     res = [x[0] for x in res]
     return jsonify(res)
@@ -91,19 +94,18 @@ def get_animal_polygon_by_name():
     cursor = get_db().cursor()
     cursor.execute("""
             WITH RECURSIVE rec AS (
-               SELECT %s as i, ST_Union(ARRAY(SELECT geom_slovakia FROM occurences_slovakia a WHERE binomial = %s AND legend != 'Extinct')) geom_slovakia, %s arr
+               SELECT %s as i, ST_Union(ARRAY(SELECT geom_slovakia FROM occurences_slovakia a WHERE (binomial_en = %s OR binomial = %s) AND legend != 'Extinct')) geom_slovakia, %s arr
                UNION ALL
                SELECT a.i - 1, ST_Intersection(a.geom_slovakia, b.geom_slovakia) AS geom_slovakia, arr[2:2147483647] AS arr
-               FROM rec a JOIN (SELECT * FROM occurences_slovakia WHERE legend != 'Extinct') b ON a.arr[2] = b.binomial
-               WHERE a.i >= 0 AND NOT ST_IsEmpty(a.geom_slovakia) 
+               FROM rec a JOIN (SELECT * FROM occurences_slovakia WHERE legend != 'Extinct') b ON (a.arr[2] = b.binomial_en OR a.arr[2] = b.binomial)
+               WHERE a.i >= 0 AND NOT ST_IsEmpty(a.geom_slovakia)
             )
             
             SELECT json_build_object(
                       'type',       'Feature',
                       'geometry',   ST_AsGeoJSON(ST_Union(rec.geom_slovakia))::json
                       ) FROM rec GROUP BY i ORDER BY i LIMIT 1;
-    """, (len(names), names[0], names))
-    print(cursor.query)
+    """, (len(names), names[0], names[0], names))
     # cursor.execute("""
     #                 SELECT json_build_object(
     #                   'type',       'Feature',
