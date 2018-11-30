@@ -64,11 +64,11 @@ def get_nearby():
     cursor.execute("""
                       SELECT json_build_object(
                       'type',       'Feature',
-                      'geometry',   ST_AsGeoJSON(ST_Intersection(ST_Buffer(ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, %s), geom_slovakia))::json,
+                      'geometry',   ST_AsGeoJSON(ST_Intersection((ST_Buffer(ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, %s))::geometry, ST_Union(geom_slovakia)))::json,
                       'properties', json_build_object(
                         'name', (CASE WHEN binomial_en != '' THEN binomial_en ELSE binomial END)))
                       FROM occurences_slovakia WHERE ST_DWithin(ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, geom_slovakia::geography, %s) 
-                      AND ST_Area(geom_slovakia::geography) < %s AND legend != 'Extinct' 
+                      AND ST_Area(geom_slovakia::geography) < %s AND legend != 'Extinct' GROUP BY (CASE WHEN binomial_en != '' THEN binomial_en ELSE binomial END)
                       ORDER BY (CASE WHEN binomial_en != '' THEN binomial_en ELSE binomial END);
                    """, (lng, lat, radius, lng, lat, radius, AREA_RARE))
     res = cursor.fetchall()
